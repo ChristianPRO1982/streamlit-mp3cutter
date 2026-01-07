@@ -98,6 +98,7 @@ class CutterApp {
     this.projectInfo = document.getElementById("projectInfo");
 
     this.playBtn = document.getElementById("playBtn");
+    this.markNowBtn = document.getElementById("markNowBtn");
     this.resetSelectionBtn = document.getElementById("resetSelectionBtn");
     this.undoCutBtn = document.getElementById("undoCutBtn");
     this.addCutBtn = document.getElementById("addCutBtn");
@@ -121,6 +122,7 @@ class CutterApp {
   _bind() {
     this.uploadBtn.addEventListener("click", () => this._onUpload());
     this.playBtn.addEventListener("click", () => this._togglePlay());
+    this.markNowBtn.addEventListener("click", () => this._markNow());
     this.resetSelectionBtn.addEventListener("click", () => this._resetSelection());
     this.undoCutBtn.addEventListener("click", () => this._undoLastCut());
     this.addCutBtn.addEventListener("click", () => this._addCut());
@@ -129,6 +131,7 @@ class CutterApp {
 
   _setUiDisabled(disabled) {
     this.playBtn.disabled = disabled;
+    this.markNowBtn.disabled = disabled;
     this.resetSelectionBtn.disabled = true;
     this.undoCutBtn.disabled = true;
     this.addCutBtn.disabled = true;
@@ -191,30 +194,42 @@ class CutterApp {
     this.wave.playPause();
   }
 
+  _markNow() {
+    if (!this.wave) return;
+    const t = this.wave.getCurrentTime();
+    this._applyMarkAtTime(t);
+  }
+
   _handleWaveClick() {
     if (!this.wave) return;
-
     const t = this.wave.getCurrentTime();
+    this._applyMarkAtTime(t);
+  }
+
+
+  _applyMarkAtTime(timeS) {
+    if (!this.wave) return;
+
     const duration = this.wave.getDuration();
 
     if (!Number.isFinite(this.selection.startS)) {
-      this.selection.setStart(t);
+      this.selection.setStart(timeS);
       this.selection.clearEnd();
       this._syncSelectionUi(duration);
       return;
     }
 
     if (!Number.isFinite(this.selection.endS)) {
-      this.selection.setEnd(t);
+      this.selection.setEnd(timeS);
       this._syncSelectionUi(duration);
       return;
     }
 
-    const boundary = this._pickBoundaryToMove(t);
+    const boundary = this._pickBoundaryToMove(timeS);
     if (boundary === "start") {
-      this.selection.setStart(t);
+      this.selection.setStart(timeS);
     } else {
-      this.selection.setEnd(t);
+      this.selection.setEnd(timeS);
     }
 
     this._syncSelectionUi(duration);
