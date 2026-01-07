@@ -18,3 +18,9 @@ class TempFileStorage:
         file_path = self._base_dir / safe_name
         file_path.write_bytes(content)
         return file_path
+
+    def clear(self) -> None:
+        """Remove all temporary files."""
+        for file in self._base_dir.glob("*"):
+            if file.is_file():
+                file.unlink()
