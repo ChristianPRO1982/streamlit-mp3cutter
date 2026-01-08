@@ -6,3 +6,4 @@
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?style=for-the-badge)
 ![FFmpeg](https://img.shields.io/badge/ffmpeg-required-black?style=for-the-badge)
 
+![Audio Splitter](https://github.com/ChristianPRO1982/audio-splitter/blob/dev/audio-splitter.png)
