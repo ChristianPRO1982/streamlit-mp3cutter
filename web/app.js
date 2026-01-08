@@ -38,10 +38,11 @@ class ApiClient {
 
 class TimeUtils {
   static toClock(seconds) {
-    const s = Math.max(0, Math.floor(seconds));
-    const mm = String(Math.floor(s / 60)).padStart(2, "0");
-    const ss = String(s % 60).padStart(2, "0");
-    return `${mm}:${ss}`;
+    const totalCentis = Math.max(0, Math.round(seconds * 100));
+    const mm = String(Math.floor(totalCentis / 6000)).padStart(2, "0");
+    const ss = String(Math.floor((totalCentis % 6000) / 100)).padStart(2, "0");
+    const cs = String(totalCentis % 100).padStart(2, "0");
+    return `${mm}:${ss}.${cs}`;
   }
 }
 
@@ -323,10 +324,10 @@ class CutterApp {
   _refreshSelectionUi() {
     const start = Number.isFinite(this.selection.startS)
       ? TimeUtils.toClock(this.selection.startS)
-      : "--:--";
+      : "--:--.--";
     const end = Number.isFinite(this.selection.endS)
       ? TimeUtils.toClock(this.selection.endS)
-      : "--:--";
+      : "--:--.--";
 
     this.selectionInfo.textContent = `Selection: ${start} → ${end}`;
   }
