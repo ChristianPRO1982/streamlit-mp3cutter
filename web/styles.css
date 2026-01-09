@@ -216,7 +216,7 @@ select:focus {
   display: grid;
   grid-template-columns: 140px 1fr auto;
   gap: 10px;
-  align-items: start;
+  align-items: center;
   padding: 10px;
   border: 1px solid #22304d;
   border-radius: 10px;
@@ -224,7 +224,8 @@ select:focus {
 }
 
 .segment > .row {
-  align-self: start;
+  align-self: center;
+  margin-top: 0;
 }
 
 .segment button {
