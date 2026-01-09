@@ -6,7 +6,6 @@
     <title>Audio Splitter</title>
 
     <link rel="stylesheet" href="/assets/styles.css" />
-    <script src="https://unpkg.com/wavesurfer.js@7"></script>
   </head>
 
   <body>
@@ -19,37 +18,32 @@
         <h2 id="upload-title">1) Upload</h2>
         <div class="row">
           <input id="fileInput" type="file" accept="audio/*" />
-          <button id="uploadBtn" type="button">Upload</button>
+          <button id="uploadBtn" class="primary" type="button">Upload</button>
           <span class="muted" id="projectInfo"></span>
         </div>
       </section>
 
       <section class="card" aria-labelledby="wave-title">
-        <h2 id="wave-title">2) Waveform + écoute</h2>
+        <h2 id="wave-title">2) Waveform + playback</h2>
 
         <div id="waveWrap">
           <div id="waveform" aria-label="Waveform"></div>
-
-          <div id="overlay" aria-hidden="true">
-            <div id="markerStart" class="marker hidden"></div>
-            <div id="markerEnd" class="marker hidden"></div>
-          </div>
         </div>
 
         <div class="row" aria-label="Controls">
-          <button id="playBtn" type="button">Play/Pause</button>
+          <button id="playBtn" class="accent" type="button">Play/Pause</button>
           <div class="zoom-group" role="group" aria-label="Zoom controls">
             <span class="zoom-icon" aria-hidden="true">🔍</span>
-            <button id="zoomOutBtn" type="button" disabled aria-label="Zoom out">➖</button>
-            <button id="zoomInBtn" type="button" disabled aria-label="Zoom in">➕</button>
-            <button id="zoomResetBtn" type="button" disabled aria-label="Zoom reset">🏠</button>
+            <button id="zoomOutBtn" class="ghost" type="button" disabled aria-label="Zoom out">➖</button>
+            <button id="zoomInBtn" class="ghost" type="button" disabled aria-label="Zoom in">➕</button>
+            <button id="zoomResetBtn" class="ghost" type="button" disabled aria-label="Zoom reset">🏠</button>
           </div>
-          <button id="markNowBtn" type="button" disabled>Mark now</button>
+          <button id="markNowBtn" class="accent" type="button" disabled>Mark now</button>
 
           <button id="resetSelectionBtn" type="button" disabled>Reset selection</button>
           <button id="undoCutBtn" type="button" disabled>Undo last cut</button>
 
-          <button id="addCutBtn" type="button" disabled>Add cut</button>
+          <button id="addCutBtn" class="primary" type="button" disabled>Add cut</button>
 
           <span class="muted" id="selectionInfo">Selection: --:-- → --:--</span>
           <span class="muted" id="timeInfo">--:--</span>
@@ -59,10 +53,6 @@
       <section class="card" aria-labelledby="segments-title">
         <h2 id="segments-title">3) Segments</h2>
 
-        <p class="muted">
-          Logique MVP: tu définis une sélection (start/end) puis tu l’ajoutes comme découpe (tu peux renommer).
-        </p>
-
         <div id="segments" aria-label="Cuts list"></div>
 
         <div class="row">
@@ -70,20 +60,20 @@
             Bitrate
             <select id="bitrate">
               <option value="128">128</option>
-              <option value="192" selected>192</option>
+              <option value="192">192</option>
               <option value="256">256</option>
-              <option value="320">320</option>
+              <option value="320" selected>320</option>
             </select>
             kbps
           </label>
 
-          <button id="exportBtn" type="button">Export MP3</button>
+          <button id="exportBtn" class="primary" type="button">Export MP3</button>
         </div>
 
         <pre id="exportLog" aria-label="Export log"></pre>
       </section>
     </main>
 
-    <script src="/assets/app.js"></script>
+    <script type="module" src="/assets/app.js"></script>
   </body>
 </html>

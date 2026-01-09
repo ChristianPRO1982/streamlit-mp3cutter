@@ -47,6 +47,15 @@ body {
   font-size: 0.95rem;
 }
 
+#selectionInfo, #timeInfo {
+  display: inline-block;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* =========================
    Rows / Flex helpers
    ========================= */
@@ -86,18 +95,43 @@ body {
 
 button {
   appearance: none;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 10px;
   padding: 10px 14px;
-  background: #2b5cff;
+  background: #334155;
   color: #ffffff;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
 }
 
 button:hover:not(:disabled) {
+  background: #41526f;
+}
+
+button.primary {
+  background: #2b5cff;
+}
+
+button.primary:hover:not(:disabled) {
   background: #1f4cff;
+}
+
+button.accent {
+  background: #14b8a6;
+}
+
+button.accent:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+button.ghost {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid #22304d;
+}
+
+button.ghost:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.25);
 }
 
 button:disabled {
@@ -152,29 +186,6 @@ select:focus {
   overflow: hidden;
 }
 
-#overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.marker {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: currentColor;
-  opacity: 0.9;
-}
-
-#markerStart {
-  color: #38bdf8;
-}
-
-#markerEnd {
-  color: #f472b6;
-}
-
 .hidden {
   display: none;
 }
@@ -191,7 +202,7 @@ select:focus {
   display: grid;
   grid-template-columns: 140px 1fr auto;
   gap: 10px;
-  align-items: start;
+  align-items: center;
   padding: 10px;
   border: 1px solid #22304d;
   border-radius: 10px;
@@ -199,7 +210,8 @@ select:focus {
 }
 
 .segment > .row {
-  align-self: start;
+  align-self: center;
+  margin-top: 0;
 }
 
 .segment button {

@@ -1,3 +1,6 @@
+import WaveSurfer from "https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js";
+import Regions from "https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.esm.js";
+
 class ApiClient {
   constructor() {
     this.baseUrl = "";
@@ -38,10 +41,11 @@ class ApiClient {
 
 class TimeUtils {
   static toClock(seconds) {
-    const s = Math.max(0, Math.floor(seconds));
-    const mm = String(Math.floor(s / 60)).padStart(2, "0");
-    const ss = String(s % 60).padStart(2, "0");
-    return `${mm}:${ss}`;
+    const totalCentis = Math.max(0, Math.round(seconds * 100));
+    const mm = String(Math.floor(totalCentis / 6000)).padStart(2, "0");
+    const ss = String(Math.floor((totalCentis % 6000) / 100)).padStart(2, "0");
+    const cs = String(totalCentis % 100).padStart(2, "0");
+    return `${mm}:${ss}.${cs}`;
   }
 }
 
@@ -90,6 +94,9 @@ class CutterApp {
     this.projectId = null;
 
     this.wave = null;
+    this.regions = null;
+    this.selectionRegion = null;
+    this.isSyncingRegion = false;
     this.selection = new SelectionState();
     this.cuts = [];
 
@@ -108,9 +115,6 @@ class CutterApp {
 
     this.selectionInfo = document.getElementById("selectionInfo");
     this.timeInfo = document.getElementById("timeInfo");
-
-    this.markerStart = document.getElementById("markerStart");
-    this.markerEnd = document.getElementById("markerEnd");
 
     this.segmentsDiv = document.getElementById("segments");
     this.exportBtn = document.getElementById("exportBtn");
@@ -170,21 +174,22 @@ class CutterApp {
     this.cuts = [];
     this._renderCuts();
 
-    this.markerStart.classList.add("hidden");
-    this.markerEnd.classList.add("hidden");
-
     this._refreshSelectionUi();
 
     if (this.wave) {
       this.wave.destroy();
     }
+    this.regions = null;
+    this.selectionRegion = null;
 
     const url = this.api.getAudioUrl(this.projectId);
+    this.regions = Regions.create();
     this.wave = WaveSurfer.create({
       container: "#waveform",
       height: 120,
       mediaControls: true,
       url: url,
+      plugins: [this.regions],
     });
 
     this.wave.on("timeupdate", (t) => {
@@ -197,9 +202,14 @@ class CutterApp {
 
     this.wave.on("ready", () => {
       this._setUiDisabled(false);
-      this._updateOverlay(this.wave.getDuration());
       this._resetZoom();
+      this._syncSelectionRegion();
       this._log("Audio loaded. Click waveform to set selection, then Add cut.");
+    });
+
+    this.regions.on("region-updated", (region) => {
+      if (region !== this.selectionRegion) return;
+      this._syncSelectionFromRegion(region);
     });
   }
 
@@ -264,18 +274,16 @@ class CutterApp {
   _applyMarkAtTime(timeS) {
     if (!this.wave) return;
 
-    const duration = this.wave.getDuration();
-
     if (!Number.isFinite(this.selection.startS)) {
       this.selection.setStart(timeS);
       this.selection.clearEnd();
-      this._syncSelectionUi(duration);
+      this._syncSelectionUi();
       return;
     }
 
     if (!Number.isFinite(this.selection.endS)) {
       this.selection.setEnd(timeS);
-      this._syncSelectionUi(duration);
+      this._syncSelectionUi();
       return;
     }
 
@@ -286,7 +294,7 @@ class CutterApp {
       this.selection.setEnd(timeS);
     }
 
-    this._syncSelectionUi(duration);
+    this._syncSelectionUi();
   }
 
   _pickBoundaryToMove(timeS) {
@@ -309,9 +317,11 @@ class CutterApp {
     return Math.max(0, this.selection.endS - this.selection.startS);
   }
 
-  _syncSelectionUi(duration) {
+  _syncSelectionUi({ syncRegion = true } = {}) {
     this._refreshSelectionUi();
-    this._updateOverlay(duration);
+    if (syncRegion) {
+      this._syncSelectionRegion();
+    }
 
     const hasStart = Number.isFinite(this.selection.startS);
     this.resetSelectionBtn.disabled = !hasStart;
@@ -323,29 +333,73 @@ class CutterApp {
   _refreshSelectionUi() {
     const start = Number.isFinite(this.selection.startS)
       ? TimeUtils.toClock(this.selection.startS)
-      : "--:--";
+      : "--:--.--";
     const end = Number.isFinite(this.selection.endS)
       ? TimeUtils.toClock(this.selection.endS)
-      : "--:--";
+      : "--:--.--";
 
     this.selectionInfo.textContent = `Selection: ${start} → ${end}`;
   }
 
-  _updateOverlay(duration) {
-    if (!Number.isFinite(duration) || duration <= 0) return;
+  _syncSelectionRegion() {
+    if (!this.wave || !this.regions) return;
 
-    const setMarker = (el, timeS) => {
-      if (!Number.isFinite(timeS)) {
-        el.classList.add("hidden");
-        return;
+    if (!Number.isFinite(this.selection.startS)) {
+      if (this.selectionRegion) {
+        this.isSyncingRegion = true;
+        this.selectionRegion.remove();
+        this.selectionRegion = null;
+        this.isSyncingRegion = false;
       }
-      const pct = Math.min(1, Math.max(0, timeS / duration)) * 100;
-      el.style.left = `calc(${pct}% - 1px)`;
-      el.classList.remove("hidden");
-    };
+      return;
+    }
 
-    setMarker(this.markerStart, this.selection.startS);
-    setMarker(this.markerEnd, this.selection.endS);
+    const duration = this.wave.getDuration();
+    const start = Math.max(0, this.selection.startS);
+    const epsilon = 0.01;
+    let end = Number.isFinite(this.selection.endS)
+      ? this.selection.endS
+      : start + epsilon;
+    if (Number.isFinite(duration)) {
+      end = Math.min(duration, end);
+    }
+    if (end <= start) {
+      end = start + epsilon;
+    }
+
+    this.isSyncingRegion = true;
+    if (!this.selectionRegion) {
+      this.selectionRegion = this.regions.addRegion({
+        start,
+        end,
+        color: "rgba(56, 189, 248, 0.2)",
+        drag: true,
+        resize: true,
+      });
+    } else {
+      if (typeof this.selectionRegion.setOptions === "function") {
+        this.selectionRegion.setOptions({ start, end });
+      } else if (typeof this.selectionRegion.update === "function") {
+        this.selectionRegion.update({ start, end });
+      } else {
+        this.selectionRegion.remove();
+        this.selectionRegion = this.regions.addRegion({
+          start,
+          end,
+          color: "rgba(56, 189, 248, 0.2)",
+          drag: true,
+          resize: true,
+        });
+      }
+    }
+    this.isSyncingRegion = false;
+  }
+
+  _syncSelectionFromRegion(region) {
+    if (this.isSyncingRegion || !region) return;
+    this.selection.setStart(region.start);
+    this.selection.setEnd(region.end);
+    this._syncSelectionUi({ syncRegion: false });
   }
 
   _resetSelection() {
@@ -356,7 +410,7 @@ class CutterApp {
     this.resetSelectionBtn.disabled = true;
 
     this._refreshSelectionUi();
-    this._updateOverlay(this.wave.getDuration());
+    this._syncSelectionRegion();
   }
 
   _addCut() {
@@ -380,7 +434,7 @@ class CutterApp {
 
     const duration = this.wave ? this.wave.getDuration() : 0;
     this._refreshSelectionUi();
-    this._updateOverlay(duration);
+    this._syncSelectionRegion();
 
     this.addCutBtn.disabled = true;
     this.resetSelectionBtn.disabled = false;
