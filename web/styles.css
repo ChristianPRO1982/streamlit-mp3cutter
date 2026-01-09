@@ -47,6 +47,15 @@ body {
   font-size: 0.95rem;
 }
 
+#selectionInfo, #timeInfo {
+  display: inline-block;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* =========================
    Rows / Flex helpers
    ========================= */
@@ -170,6 +179,7 @@ select:focus {
 #waveWrap {
   position: relative;
   margin-top: 12px;
+  --wave-height: 120px;
 }
 
 #waveform {
@@ -179,7 +189,10 @@ select:focus {
 
 #overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--wave-height);
   pointer-events: none;
 }
 
@@ -193,11 +206,11 @@ select:focus {
 }
 
 #markerStart {
-  color: #38bdf8;
+  color: #36f;
 }
 
 #markerEnd {
-  color: #f472b6;
+  color: #f63;
 }
 
 .hidden {
